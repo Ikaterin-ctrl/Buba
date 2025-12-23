@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oie, eu sou a Buba!</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Shrikhand&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            /* Paleta Retro Sóbria */
+            --bg-color: #FFF9C4;       /* Amarelo Manteiga */
+            --card-bg: #FFFEF9;        /* Off-white */
+            --text-color: #4A4A4A;     /* Cinza chumbo */
+            --accent-green: #558B74;   /* Verde Vintage */
+            --accent-orange: #E67E22;  /* Laranja Queimado */
+            --border: #2C3E50;         /* Azul escuro (quase preto) */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            /* Fundo Quadriculado Suave */
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(45deg, #F0E68C 25%, transparent 25%),
+                linear-gradient(-45deg, #F0E68C 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #F0E68C 75%),
+                linear-gradient(-45deg, transparent 75%, #F0E68C 75%);
+            background-size: 40px 40px;
+            background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+            
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .poster-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 20px;
+            border: 3px solid var(--border);
+            box-shadow: 12px 12px 0px rgba(44, 62, 80, 0.15);
+            overflow: hidden;
+            position: relative;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Header */
+        header {
+            background: var(--accent-green);
+            padding: 30px 20px 70px 20px;
+            text-align: center;
+            border-bottom: 3px solid var(--border);
+            position: relative;
+        }
+
+        /* Detalhe ondulado */
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px; left: 0; right: 0;
+            height: 20px;
+            background-image: radial-gradient(circle, var(--accent-green) 10px, transparent 11px);
+            background-size: 20px 20px;
+            background-position: bottom center;
+        }
+
+        h1 {
+            font-family: 'Shrikhand', cursive;
+            color: #FFF;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0px var(--border);
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .content {
+            padding: 0 25px 30px 25px;
+            text-align: left;
+        }
+
+        /* Foto estilo Sticker */
+        .photo-area {
+            text-align: center;
+            margin-top: -80px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .cat-sticker {
+            width: 200px;
+            height: auto;
+            filter: drop-shadow(0px 0px 0px 6px white) drop-shadow(0px 4px 6px rgba(0,0,0,0.2));
+            transform: rotate(-2deg);
+            transition: transform 0.3s;
+            animation: float 4s ease-in-out infinite;
+        }
+        .cat-sticker:hover { 
+            transform: scale(1.05) rotate(0deg); 
+            animation-play-state: paused; /* Pausa a animação de flutuar */
+        }
+
+        /* Caixa de Texto */
+        .note-box {
+            background: #FFF;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            animation: fadeInUp 0.8s 0.2s ease-out forwards;
+            opacity: 0;
+        }
+
+        /* Fita Adesiva */
+        .tape {
+            position: absolute;
+            top: -12px; left: 50%;
+            transform: translateX(-50%);
+            width: 80px; height: 24px;
+            background: rgba(230, 126, 34, 0.4);
+            transform: translateX(-50%) rotate(1deg);
+            transition: transform 0.2s;
+        }
+        .tape:hover {
+            animation: wiggle 0.5s;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        strong { color: var(--accent-green); font-weight: 700; }
+        
+        .alert-text {
+            color: #C0392B; 
+            font-weight: 800;
+            text-align: center;
+            background: #F9EBEA;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px dashed #C0392B;
+        }
+
+        /* Botões */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s 0.2s ease-out forwards;
+            opacity: 0;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+        }
+
+        .btn:active { transform: scale(0.98); }
+        .btn-mom { background-color: var(--accent-green); }
+        .btn-dad { background-color: #5DADE2; }
+        .btn-insta { 
+            background: transparent; 
+            border: 2px solid var(--accent-orange); 
+            color: var(--accent-orange);
+            box-shadow: none;
+        }
+
+        /* Área do Mapa */
+        .map-wrapper {
+            position: relative;
+            margin-top: 10px;
+            animation: fadeInUp 0.8s 0.2s ease-out forwards;
+            opacity: 0;
+        }
+
+        .map-pointer-text {
+            font-family: 'Shrikhand', cursive;
+            color: var(--border);
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 5px;
+            transform: rotate(-2deg);
+        }
+
+        #map {
+            height: 250px;
+            width: 100%;
+            border-radius: 15px;
+            border: 3px solid var(--border);
+            z-index: 1;
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #999;
+        }
+
+        /* --- ANIMAÇÕES --- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-10px) rotate(-2deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(230, 126, 34, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 126, 34, 0); }
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: translateX(-50%) rotate(1deg); }
+            25% { transform: translateX(-50%) rotate(-1deg); }
+            75% { transform: translateX(-50%) rotate(3deg); }
+        }
+
+        .custom-div-icon > div {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="poster-card">
+        <header>
+            <h1>OIE, EU SOU<br>A BUBA!</h1>
+        </header>
+
+        <div class="photo-area">
+            <img src="./Buba-removebg-preview.png" alt="Foto da Buba" class="cat-sticker">
+        </div>
+
+        <div class="content">
+            
+            <div class="note-box">
+                <div class="tape"></div>
+                
+                <p>
+                    Sou uma gatinha safada e às vezes dou uma escapadinha para passear.
+                </p>
+                <p style="font-size: 0.95rem; color: #666;">
+        <em>Como eu sou:</em> Sou uma gatinha <strong>tigrada</strong> com listras pretas e marrons. Tenho <strong>olhos verdes</strong> grandes, nariz cor de tijolo e um <strong>"M" na testa</strong>.
+    </p><p style="font-size: 0.95rem; color: #666;">
+    
+
+                <p>
+                    Não se preocupe, eu sei voltar para casa!
+                </p>
+
+                <p>
+                    Sou a gata do <strong>Francisco</strong> meu irmão humano que tem 2 anos de idade, a gente se ama muito e ele vai sentir minha falta.
+                </p>
+
+                <p class="alert-text">
+                    POR FAVOR, NÃO ME LEVE EMBORA!
+                </p>
+            </div>
+
+            <div class="btn-group">
+                <a href="#" onclick="contact('mae')" class="btn btn-mom">
+                    Falar com a Mamãe
+                </a>
+                
+                <a href="#" onclick="contact('pai')" class="btn btn-dad">
+                    Ligar para o Papai
+                </a>
+                
+                <a href="https://www.instagram.com/ikaterina._.c?igsh=MTk3ODgwODNxMjFtbg==" target="_blank" class="btn btn-insta">
+                     Instagram para contato caso os telefones não funcionem.
+                </a>
+            </div>
+
+            <div class="map-wrapper">
+                <div class="map-pointer-text">Eu moro aqui ó 👇</div>
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <footer>
+            Feito com ❤️ para que a Buba volte para casa!
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- COORDENADAS CORRIGIDAS (Rua Rodolfo Bernadelli - Jd. Santa Mônica) ---
+        const lat = -22.854036; 
+        const long = -47.109158;
+        
+        const momPhone = "5519993488882";
+        const dadPhone = "5519996234616";
+
+        function contact(who) {
+            let num = who === 'mae' ? momPhone : dadPhone;
+            let text = encodeURIComponent("Oie! Encontrei a Buba, vi a localização no site.");
+            window.location.href = `https://wa.me/${num}?text=${text}`;
+        }
+
+        // Configuração do Mapa
+        var map = L.map('map', {
+            zoomControl: false, 
+            dragging: false, 
+            scrollWheelZoom: false
+        }).setView([lat, long], 16); 
+
+        // Estilo do Mapa (Clean)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Ícone de Casa Personalizado
+        var homeIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:#E67E22; width:30px; height:30px; border-radius:50%; border:3px solid white; box-shadow:0 4px 6px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; font-size:16px;'>🏠</div>",
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        // Marcador exato na rua
+        L.marker([lat, long], {icon: homeIcon}).addTo(map)
+            .bindPopup("Minha Casa!")
+            .openPopup();
+
+        // Círculo para mostrar a região
+        L.circle([lat, long], {
+            color: '#E67E22',      
+            fillColor: '#E67E22',
+            fillOpacity: 0.2,
+            radius: 150            
+        }).addTo(map);
+
+    </script>
+</body>
+</html>
